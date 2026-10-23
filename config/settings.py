@@ -20,16 +20,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 获取系统环境变量
-class Setting:
-    # 主控大脑
-    OLLAMA_CHAT_MODEL1 = os.getenv("OLLAMA_CHAT_MODEL1")
-    # 备用大脑
-    OLLAMA_CHAT_MODEL2 = os.getenv("OLLAMA_CHAT_MODEL2")
-
+class Setting: 
     # logger等级
     LOG_LEVEL = os.getenv("LOG_LEVEL")
     # logger存储位置
     LOG_FOLDER_PATH = os.getenv("LOG_FOLDER_PATH")
+
+    # 主控大脑
+    OLLAMA_CHAT_MODEL1 = os.getenv("OLLAMA_CHAT_MODEL1")
+    # 备用大脑
+    OLLAMA_CHAT_MODEL2 = os.getenv("OLLAMA_CHAT_MODEL2")
 
 # 直接实例化，方便后续调用
 setting = Setting()
