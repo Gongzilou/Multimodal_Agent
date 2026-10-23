@@ -26,6 +26,11 @@ class Setting:
     # 备用大脑
     OLLAMA_CHAT_MODEL2 = os.getenv("OLLAMA_CHAT_MODEL2")
 
+    # logger等级
+    LOG_LEVEL = os.getenv("LOG_LEVEL")
+    # logger存储位置
+    LOG_FOLDER_PATH = os.getenv("LOG_FOLDER_PATH")
+
 # 直接实例化，方便后续调用
 setting = Setting()
 
