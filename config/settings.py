@@ -26,6 +26,8 @@ class Setting:
     # logger存储位置
     LOG_FOLDER_PATH = os.getenv("LOG_FOLDER_PATH")
 
+    # 模型供应商
+    OLLAMA_MODEL_PROVIDER = os.getenv("OLLAMA_MODEL_PROVIDER")
     # 主控大脑
     OLLAMA_CHAT_MODEL1 = os.getenv("OLLAMA_CHAT_MODEL1")
     # 备用大脑
