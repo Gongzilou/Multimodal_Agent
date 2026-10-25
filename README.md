@@ -15,16 +15,12 @@ Python=3.10.12
 langchain==1.4.7
 python-dotenv==1.2.4
 langchain-ollama==1.1.0
+fastapi==0.162.0
+uvicorn[standard]
 ```
 
 # 待开发事项
 ```
-""" 
-待完成：
-通过遍历tools文件夹,
-判断是否有工具没有加入进来，
-记录log.warning 
-"""
 
 """  
 待完成：
