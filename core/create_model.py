@@ -40,10 +40,3 @@ if __name__ == "__main__":
 
     model = local_chat_model()
 
-    # from unittest.mock import patch
-    # with patch.object(
-    #     sys.modules[__name__],
-    #     "init_chat_model", 
-    #     side_effect=RuntimeError("模拟【模型】初始化失败")
-    # ):
-    #     model = local_chat_model()

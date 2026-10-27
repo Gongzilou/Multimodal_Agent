@@ -15,6 +15,11 @@ Python=3.10.12
 langchain==1.4.7
 python-dotenv==1.2.4
 langchain-ollama==1.1.0
+PyJWT==2.15.1
+cryptography==50.0.2
+
+
+
 fastapi==0.162.0
 uvicorn[standard]
 ```

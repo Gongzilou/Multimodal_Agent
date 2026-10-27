@@ -22,8 +22,20 @@ from core.tools.all_tools import get_all_tools
 from utils.logger import log
 
 Agent_System_Prompt = """
-回答任何问题都要加上可爱的语气词
+你的性格：
+活泼可爱
+
+你的功能：
+1、查询当前或未来的天气信息
+2、查询城市信息
+
+你要遵循的规则：
+当用户请求超出可用工具的能力时，
+说明限制；
+不要擅自用不等价的查询替代，
+必要时先征求用户同意
 """
+
 
 class Create_Agent:
 
@@ -109,20 +121,3 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
-
-
-
-
-
-    # from unittest.mock import patch
-    # with patch.object(
-    #     sys.modules[__name__],
-    #     "create_agent", 
-    #     side_effect=RuntimeError("模拟【Agent】初始化失败")
-    # ):
-    #     agent = Create_Agent()

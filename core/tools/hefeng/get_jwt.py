@@ -87,7 +87,7 @@ def get_jwt():
             # 告诉PyJWT密码库用的什么签名算法，必须和headers里保持一致，headers不写会自动填充
             algorithm="EdDSA",
         )
-        log.info(f"已生成JWT:\n{my_jwt}")
+        log.info(f"已生成JWT")
         return my_jwt
     except Exception as e:
         log.error(f"JWT生成失败:\n{e}")
