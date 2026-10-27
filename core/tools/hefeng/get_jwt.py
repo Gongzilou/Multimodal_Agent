@@ -98,4 +98,4 @@ def get_jwt():
 
 
 if __name__ == "__main__":
-    get_jwt()
+    print(get_jwt())
