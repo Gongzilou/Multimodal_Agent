@@ -77,20 +77,16 @@ def request_get_weather(
         # 将响应数据转成json格式进行返回
         return response.json()
     
-    except requests.exceptions.ConnectTimeout as e:
-        error_msg = "请求超时：无法连接和风天气服务器，请检查网络"
-        log.exception(error_msg)
-        raise RuntimeError(error_msg) from e
-    except requests.exceptions.ReadTimeout as e:
-        error_msg = "请求超时：服务器长时间没有返回数据"
+    except requests.exceptions.Timeout as e:
+        error_msg = f"请求超时:\n{str(e)}"
         log.exception(error_msg)
         raise RuntimeError(error_msg) from e
     except requests.exceptions.ConnectionError as e:
-        error_msg = "连接失败：网络异常、域名错误或服务器无法访问"
+        error_msg = f"请求连接失败:\n{str(e)}"
         log.exception(error_msg)
         raise RuntimeError(error_msg) from e
     except requests.exceptions.HTTPError as e:
-        error_msg = f"接口返回错误状态码：{response.status_code}, 响应：{response.text[:200]}"
+        error_msg = f"HTTP状态异常:{response.status_code}, 响应:\n{response.text[:200]}"
         log.exception(error_msg)
         raise RuntimeError(error_msg) from e
     except Exception as e:

@@ -118,7 +118,7 @@ def format_json(
     uvIndex = data_json.get("uvIndex","未知")
 
     weather_dic = {
-        "预报时间":weather_time,
+        "预报时间": weather_time,
         "天气" : condition.get("text","未知"),
         "气温" : temp,
         "体感温度" : f'{feelsLike.get("value","未知")} {feelsLike.get("unit","")}',
@@ -137,8 +137,8 @@ def format_json(
         "露点温度" : f'{dewPoint.get("value","未知")} {dewPoint.get("unit","")}',
         "云量" : f'{round(cloudCover * 100)}%' if cloudCover is not None else "未知",
         "紫外线指数" : uvIndex,
-        "日出时间":sunrise,
-        "日落时间":sunset,
+        "日出时间": sunrise,
+        "日落时间": sunset,
 
     }
 

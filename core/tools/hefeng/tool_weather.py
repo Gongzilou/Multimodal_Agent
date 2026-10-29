@@ -37,7 +37,7 @@ class Weather_Args(BaseModel):
     hours : Annotated[int | None,Field(description="预报小时数，支持1-240小时，默认值为None",ge=1,le=240)] = None
 
 @tool(args_schema=Weather_Args)
-def tool_weather(**args):
+def tool_weather(**kwargs):
     """
     根据地理位置的经纬度以及时间颗粒度查询当前或未来的天气情况。
     支持实时查询current、按天查询daily、按小时查询hourly。
@@ -49,12 +49,13 @@ def tool_weather(**args):
     """
     # 1、发送请求获取响应数据
     try:
-        response_json = request_get_weather(**args)
-        log.info("请求发送成功")
+        response_json = request_get_weather(**kwargs)
+        log.info("获取天气请求发送成功")
     except Exception as e:
-        error_msg = f"请求发送失败:\n{str(e)}"
+        error_msg = f"获取天气请求发送失败:\n{str(e)}"
         log.exception(error_msg)
-        raise RuntimeError(error_msg) from e
+        # raise RuntimeError(error_msg) from e
+        return error_msg
 
     # 2、将响应数据进行清洗：提取 + 翻译
     try:
@@ -63,7 +64,8 @@ def tool_weather(**args):
     except  Exception as e:
         error_msg = f"响应数据清洗发生错误:\n{str(e)}"
         log.exception(error_msg)
-        raise RuntimeError(error_msg) from e
+        # raise RuntimeError(error_msg) from e
+        return error_msg
 
     return result
 
