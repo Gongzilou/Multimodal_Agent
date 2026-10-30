@@ -17,7 +17,6 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 
 from core.create_model import local_chat_model
-from core.memory import short_memory
 from core.tools.all_tools import get_all_tools
 from utils.logger import log
 
@@ -38,14 +37,13 @@ Agent_System_Prompt = """
 
 class Create_Agent:
 
-    def __init__(self):
+    def __init__(self,checkpointer = None):
         self.model = local_chat_model()
-        self.checkpointer = short_memory()
         self.tool_list = get_all_tools()
         try:
             self.agent = create_agent(
                 model=self.model,
-                checkpointer=self.checkpointer,
+                checkpointer=checkpointer,
                 tools=self.tool_list,
                 middleware=[],
                 system_prompt=Agent_System_Prompt,
@@ -86,8 +84,11 @@ class Create_Agent:
 
 
 if __name__ == "__main__":
-    # 初始化
-    agent = Create_Agent()
+
+    # 初始化agent（内存记忆版本）
+    from langgraph.checkpoint.memory import InMemorySaver
+    checkpointer = InMemorySaver()
+    agent = Create_Agent(checkpointer=checkpointer)
 
     # 标识不同用户user_id——用户登入时取得
     user_id = "Gongzi"
@@ -116,6 +117,7 @@ if __name__ == "__main__":
             thread_id=thread_id,
         )
         print(f"AI:\n{answer}\n")
+
 
 
 
