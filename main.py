@@ -1,58 +1,29 @@
 """  
 主程序入口
+
+启动时会验证用户身份(Gongzilou)
+
+游客：退出程序
+用户：显示所有会话记录，开启新会话/继续某个会话/删除某个会话/删除所有会话/退出
 """
-
-import uuid
-
-from core.create_agent import Create_Agent
-from utils.logger import log
-from core.memory.connect_db import Postgres_DB
-from langgraph.checkpoint.postgres import PostgresSaver
-from core.memory.crud_chat_session import Crud_Chat_Session
-from core.memory.get_short_memory import get_short_memory
 import sys
+from core.memory.connect_db import Postgres_DB
+from core.memory.crud_chat_session import Crud_Chat_Session
+from core.create_agent import Create_Agent
+import uuid
+from core.memory.short_memory import Short_Memory
+from langgraph.checkpoint.postgres import PostgresSaver
 
 
-# 开启新会话，自动生成thread_id
+
+
+# 开始循环对话
 def loop_chat(
-    crud: Crud_Chat_Session,
     agent: Create_Agent,
     user_id: str,
-    # 只有旧会话需要checkpointer、thread_id
-    checkpointer: PostgresSaver = None,
-    thread_id: str = None
-):
-
-    # 继续上次会话，用旧的会话ID，映射表修改当前会话ID的活跃时间与过期时间
-    if thread_id:
-        my_thread_id = thread_id
-        print(f"当前会话ID(旧):{my_thread_id}")
-        # 修改活跃时间、过期时间
-        crud.update_thread_id(thread_id=my_thread_id)
-        # 展示之前的会话记录
-        msg_list = get_short_memory(checkpointer=checkpointer,thread_id=thread_id)
-        if msg_list:
-            print("当前会话历史记录如下：")
-            for msg in msg_list:
-                print(msg)
-        else:
-            print("当前会话没有历史记录")
-    
-    # 开启新会话，用新的会话ID，映射表新增用户ID与会话ID的映射记录
-    else:
-        # 自动生成会话ID
-        # 由uuid随机生成
-        # python版本3.14及以上可以使用uuid7，
-        # 优点：时间前缀 + 随机，有序，数据库索引性能好（uuid4无序，索引性能差）
-        my_thread_id = str(uuid.uuid4())
-        print(f"当前会话ID(新):{my_thread_id}")
-        # 将用户ID与会话ID绑定存入映射表（每轮invoke结束后再将对话记录存入checkpointer相应的表里）
-        crud.add_thread_id(thread_id=my_thread_id)
-
-
-    
-    # 开始循环对话
-    
+    thread_id: str,
+    crud: Crud_Chat_Session
+): 
     # 对话轮次
     count = 1
     while True:
@@ -65,90 +36,154 @@ def loop_chat(
             print("\nAI:\n再见\n")
             break
         
-        # 用户按错成换行
+        # 用户按空格
         if not query:
             continue
 
         # 正式开始单论对话
-        # 后续要对user_id和thread_id做匹配验证
         result = agent.ask(
             query=query,
             user_id=user_id,
-            thread_id=my_thread_id,
+            thread_id=thread_id,
         )
 
         print(f"\nAI:\n{result}\n")
         count += 1
 
+        # 每一轮对话结束都需要对映射表中这个会话的活跃时间、过期时间进行更新
+        crud.update_thread_id(thread_id=thread_id)
+
+
+
+
 
 def main():
+    print("="*30 + "页面1" + "="*30)
+    print("="*30 + "页面1" + "="*30)
+    print("="*30 + "页面1" + "="*30)
+    print("\n" + "="*10 + "欢迎使用智能体Agent" + "="*10 + "\n")
 
-    # 初始化数据库
-    db = Postgres_DB()
-    # 连接数据库
-    db.open_db()
-    # 创建短期记忆持久化存储机制checkpointer
-    my_checkpointer = PostgresSaver(db.conn)
+    # 允许使用程序的用户，后续可以加入功能：注册用户，存入数据库
+    alloud_user = ["Gongzilou",]
+
+    # 验证身份
+    user_id = input("\n请输入身份ID:\n").strip()
+    # 验证未通过
+    print("="*30 + "页面2" + "="*30)
+    print("="*30 + "页面2" + "="*30)
+    print("="*30 + "页面2" + "="*30)
+    if user_id not in alloud_user:
+        print("\n很抱歉，您暂时没有使用权限\n")
+        sys.exit(0)
+
+    # 验证通过
+    print("="*30 + "页面2" + "="*30)
+    print("="*30 + "页面2" + "="*30)
+    print("="*30 + "页面2" + "="*30)
+    print(f"\n您好，{user_id}\n")
+    # 创建数据库连接
+    my_db = Postgres_DB() # 初始化数据库
+    my_db.open_db() # 开启数据库连接
+    my_conn = my_db.conn # 获取连接
+    # 创建检查点checkpointer
+    my_checkpointer = PostgresSaver(my_conn)
     # 自动建表（四张存储checkpointer元数据、对话记录的表）
-    my_checkpointer.setup()
-    
+    my_checkpointer.setup()  
     # 初始化agent，同时赋予短期记忆能力
-    agent = Create_Agent(checkpointer=my_checkpointer)
-
-    # 接收长期记忆标志：user_id
-    # 暂时随便写一个（后续将改为用户登入ID）
-    # my_user_id = "Gongzilou"
-    my_user_id = input("\n欢迎使用Agent,请输入您的用户名:\n").strip()
-    log.info(f"当前用户ID:{my_user_id}")
-
+    my_agent = Create_Agent(checkpointer=my_checkpointer)
     
     
-    # 获取该用户的所有会话ID
-    crud = Crud_Chat_Session(conn=db.conn,user_id=my_user_id)
-    all_thread_id = crud.get_all_thread_id()
-    print("\n" + "="*20 + "Agent对话开始(输入exit退出)" + "="*20 + "\n")
-    # 已经有过会话记录的老用户
-    if all_thread_id:
-        print(f"用户{my_user_id}您好，检测到您是老用户，之前有以下会话记录:")
-        # 存放会话ID和对应位置，后续根据用户输入的数字传入会话ID用于开启旧会话
-        thread_dic = {}
-        for i,thread_id in enumerate(all_thread_id,1):
-            print(f"{i}: {thread_id}")
-            # 用户输入的数字是字符串
-            thread_dic[str(i)] = thread_id
-        while True:
-            user_input = input("\n请输入相应数字开启继续对话(输入0开启新对话,exit结束程序):\n").strip()
-            if not user_input:
-                print("不能为空，请输入内容")
-                continue
-            elif user_input.lower() == "exit":
-                print("再见")
-                sys.exit(0)
-            elif user_input == "0":
-                print("已为您开启新会话")
-                loop_chat(crud=crud,agent=agent,user_id=my_user_id)
-                break
-            elif user_input in thread_dic:
-                print("已为您继续上次会话")
-                loop_chat(checkpointer=my_checkpointer,crud=crud,agent=agent,user_id=my_user_id,thread_id=thread_dic[user_input])
-                break
-            else:
-                print("输入无效，请正确输入")
-                continue
-    
-    # 还没有会话记录的新用户
-    else:
-        print(f"用户{my_user_id}您好，检测到您是新用户，目前还没有对话记录,已为您开启新会话")
-        loop_chat(crud=crud,agent=agent,user_id=my_user_id)
-        
+    # 用户选择界面
+    while True: 
+
+        # 展示所有会话记录（目前是会话ID，后续可以改成摘要）
+        crud = Crud_Chat_Session(conn=my_conn,user_id=user_id) # 初始化
+        thread_id_list = crud.get_all_thread_id() # 查询该用户的所有会话ID
+        thread_ids_dic = {} # 存放会话ID与对应数字，后续根据用户选择的数字，继续相应的旧会话
+        print("以下是您所有会话记录:")
+        for i,thread_id in enumerate(thread_id_list,1):
+            thread_ids_dic[str(i)] = thread_id
+            print(f"  {i}、{thread_id}")
+
+        print("\n1: 新建会话 | 2: 删除单个会话 | 3: 删除全部会话 | 4: 继续旧会话 | 0: 退出程序\n")
+        user_choice = input("请输入您的选择:\n").strip()
+        print("="*30 + "页面3" + "="*30)
+        print("="*30 + "页面3" + "="*30)
+        print("="*30 + "页面3" + "="*30)
+        if user_choice not in ["0","1","2","3","4"]:
+            print("请输入正确内容！")
+            continue
+        if user_choice == "0":
+            print("再见")
+            break
+        if user_choice == "1":
+            # 生成新的会话ID
+            new_thread_id = str(uuid.uuid4())
+            # 将用户ID与会话ID存入映射表
+            crud.add_thread_id(thread_id=new_thread_id)
+            # 开始循环对话
+            print(f"\n当前会话ID(新): {new_thread_id}\n")
+            loop_chat(agent=my_agent,user_id=user_id,thread_id=new_thread_id,crud=crud)
+            continue
+        if user_choice == "2":
+            #这里只能输入会话ID对应的序号
+            user_input_index = input("\n请选择要删除的会话(只能输入会话ID对应的序号):\n").strip()
+            need_delete_thread_id = thread_ids_dic[user_input_index]
+            
+            # 先删除checkpointer相关表的内容
+            short_memory = Short_Memory(checkpointer=my_checkpointer,thread_id=need_delete_thread_id)
+            is_true = short_memory.delete_messages()
+            if is_true:
+                # 后删除映射表内容
+                crud.delete_thread_id(need_delete_thread_id)
+            continue
+        if user_choice == "3":
+            
+            # 先删除checkpointer相关表的内容
+            for row in thread_ids_dic.values():
+                short_memory = Short_Memory(checkpointer=my_checkpointer,thread_id=row)
+                is_true = short_memory.delete_messages()
+                if is_true:
+                    # 后删除映射表内容
+                    crud.delete_thread_id(row)
+            # # 后删除映射表内容
+            # crud.delete_user_id()
+            continue
+        if user_choice == "4":
+            #这里只能输入会话ID对应的序号
+            thread_index = input("\n请选择要继续的会话(只能输入会话ID对应的序号):\n").strip()
+            # 沿用旧的会话ID
+            old_thread_id = thread_ids_dic[thread_index]
+            # 展示对话历史
+            short_memory = Short_Memory(checkpointer=my_checkpointer,thread_id=old_thread_id)
+            msg_list = short_memory.get_messages()
+            print("\n对话历史如下:\n")
+            for msg in msg_list:
+                print(msg)
+            print("\n开始新一轮对话:\n")
+            # 开始循环对话 
+            print(f"\n当前会话ID(旧): {old_thread_id}\n")  
+            loop_chat(agent=my_agent,user_id=user_id,thread_id=old_thread_id,crud=crud)
+            continue
 
 
-    # 关闭数据库，释放连接
-    db.close_db()
 
+    my_db.close_db() # 断开数据库连接
+   
 
 
 
 
 if __name__ == "__main__":
+    # import logging
+    # from utils.logger import log
+    # for h in log.handlers[:]:
+    #     if isinstance(h,logging.StreamHandler):
+    #         log.removeHandler(h)
+
+
+
     main()
+
+
+

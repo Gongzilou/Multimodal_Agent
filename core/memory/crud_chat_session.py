@@ -1,5 +1,8 @@
 """  
-对用户的会话记录进行增删改查——只针对chat_session映射表
+对用户的会话记录进行增删改查
+
+相关表格：
+chat_session: 用户ID与会话ID的映射表
 """
 import sys
 from pathlib import Path
@@ -82,9 +85,9 @@ class Crud_Chat_Session:
         and
         thread_id = %s;
         """
-        if not self.thread_id:
-            log.warning("暂时没有会话记录需要删除")
-            return
+        # if not thread_id:
+        #     log.warning("暂时没有会话记录需要删除")
+        #     return
         try:
             with self.conn.cursor() as cur:
                 cur.execute(sql,(self.user_id,thread_id,))
