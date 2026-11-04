@@ -24,6 +24,7 @@ langgraph-checkpoint-postgres==3.2.0
 
 fastapi==0.162.0
 uvicorn[standard]
+psutil==7.2.2
 ```
 
 # 待开发事项
